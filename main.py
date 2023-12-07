@@ -4,6 +4,9 @@ import datetime
 from typing import Tuple, Dict
 from enum import Enum
 import requests
+import time
+import random
+
 from yaml import load, dump, YAMLError
 
 try:
@@ -99,22 +102,31 @@ for alert in alerts.values():
 tickers = yf.Tickers(list(alerts.keys()))
 
 continue_polling = True
+min_sleep_time_s = conf["min_sleep_time_s"]
+random_extra_sleep_time_s = conf["random_extra_sleep_time_s"]
 while continue_polling:
-    update = get_last_day_and_close(tickers)
     text = ""
-    for k, v in update.items():
-        alert = alerts[k]
-        price_range = alert["price_range"]
-        last_update = alert["last_update"]
 
-        # TODO: Handle failure and send message about it!
-        new_update = get_symbol_status(v[1], price_range)
+    try:
+        update = get_last_day_and_close(tickers)
+        for k, v in update.items():
+            alert = alerts[k]
+            price_range = alert["price_range"]
+            last_update = alert["last_update"]
 
-        if new_update != last_update:
-            text += f"{alert['name']} changed from {last_update.name if last_update is not None else 'None'} to {new_update.name} with value {v[1]:.3f} -- [{price_range[0]:.3f},{price_range[1]:.3f}]\n\n"
-            alert["last_update"] = new_update
+            new_update = get_symbol_status(v[1], price_range)
+
+            if new_update != last_update:
+                text += f"**{alert['name']}**\n{last_update.name if last_update is not None else 'None'} -> {new_update.name}\nV: {v[1]:.3f} -- [{price_range[0]:.3f},{price_range[1]:.3f}]\n\n"
+                alert["last_update"] = new_update
+    except Exception as e:
+        text = f"Failed to get data! {e}"
 
     if len(text) > 0:
         res = requests.get(f"{SEND_MESSAGE_URL}?chat_id={GROUP_ID}&text={text}")
+        print(f"Sent update message!\n\n{text}")
 
-    continue_polling = False
+    sleep_time = random.random() * random_extra_sleep_time_s + min_sleep_time_s
+    print(f"Sleeping for {sleep_time / 3600}h")
+    time.sleep(sleep_time)
+    # continue_polling = False

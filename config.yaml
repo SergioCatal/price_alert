@@ -8,3 +8,6 @@ alerts:
     name: Finnair Oyj
     lower_trigger: 0.031
     upper_trigger: 0.04
+
+min_sleep_time_s: 3600
+random_extra_sleep_time_s: 7200
