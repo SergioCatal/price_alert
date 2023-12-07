@@ -1,0 +1,10 @@
+alerts:
+  IWDA.AS:
+    name: iShares Core MSCI World UCITS ETF
+    lower_trigger: 76.0
+    upper_trigger: 79.0
+
+  FIA1S.HE:
+    name: Finnair Oyj
+    lower_trigger: 0.031
+    upper_trigger: 0.04
